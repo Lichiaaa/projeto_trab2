@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Agenda de Consultas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0 1.5rem 2rem;
+      background-color: #f5f5f5;
+    }
+
+    header {
+      padding: 1rem 0;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #ddd;
+    }
+
+    h1 {
+      margin: 0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+
+    .card h2 {
+      margin-top: 0;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem 1rem;
+      align-items: center;
+    }
+
+    label {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    input, textarea, button, select {
+      font: inherit;
+      padding: 0.4rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      grid-column: 1 / 3;
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .form-actions {
+      grid-column: 1 / 3;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background-color: #2563eb;
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background-color: #e5e7eb;
+      color: #111827;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      border: 1px solid #e5e7eb;
+      padding: 0.5rem 0.6rem;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f3f4f6;
+    }
+
+    .empty {
+      padding: 0.5rem 0;
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+
+    .badge-error {
+      display: inline-block;
+      padding: 0.2rem 0.4rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      background-color: #fee2e2;
+      color: #b91c1c;
+      margin-left: 0.25rem;
+    }
+
+    .msg {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .msg.error {
+      color: #b91c1c;
+    }
+
+    .msg.success {
+      color: #15803d;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Agenda de Consultas</h1>
+      <p>Interface web para listar e agendar consultas.</p>
+    </header>
+
+    <!-- Card de cadastro -->
+    <section class="card">
+      <h2>Agendar nova consulta</h2>
+      <form id="form-consulta">
+        <div>
+          <label for="data">Data</label>
+          <input type="date" id="data" name="data" required />
+        </div>
+
+        <div>
+          <label for="hora_inicio">Horário de início</label>
+          <input type="time" id="hora_inicio" name="hora_inicio" required />
+        </div>
+
+        <div>
+          <label for="hora_final">Horário de término</label>
+          <input type="time" id="hora_final" name="hora_final" required />
+        </div>
+
+        <textarea id="descricao" name="descricao" placeholder="Descrição da consulta" required></textarea>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" id="btn-limpar">Limpar</button>
+          <button type="submit" class="btn-primary">Agendar</button>
+        </div>
+      </form>
+      <div id="mensagem-form" class="msg"></div>
+    </section>
+
+    <!-- Card de listagem -->
+    <section class="card">
+      <h2>Consultas agendadas</h2>
+      <button id="btn-atualizar" class="btn-secondary" style="margin-bottom: 0.5rem;">
+        Atualizar lista
+      </button>
+
+      <div id="lista-vazia" class="empty" style="display: none;">
+        Nenhuma consulta cadastrada.
+      </div>
+
+      <table id="tabela-consultas" style="display: none;">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Data</th>
+            <th>Início</th>
+            <th>Término</th>
+            <th>Descrição</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- linhas geradas via JS -->
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <script>
+    // API REST:
+    // GET    /appointments
+    // POST   /appointments
+    // DELETE /appointments/:id
+    //
+    // Por enquanto, deixo os lugares marcados com TODO pra ligar no back.
+
+    const tabela = document.getElementById("tabela-consultas");
+    const tbody = tabela.querySelector("tbody");
+    const listaVazia = document.getElementById("lista-vazia");
+    const msgForm = document.getElementById("mensagem-form");
+
+    function formatarDataHoraISO(isoString) {
+      const date = new Date(isoString);
+      return date.toLocaleString("pt-BR", {
+        year: "2-digit",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "UTC"
+      });
+    }
+
+    async function carregarConsultas() {
+      // TODO: substituir esse array fake por fetch da API REST
+      // const resp = await fetch("http://localhost:3000/appointments");
+      // const consultas = await resp.json();
+
+      const consultas = []; // <-- TROCAR depois pela resposta real
+
+      tbody.innerHTML = "";
+
+      if (consultas.length === 0) {
+        tabela.style.display = "none";
+        listaVazia.style.display = "block";
+        return;
+      }
+
+      tabela.style.display = "table";
+      listaVazia.style.display = "none";
+
+      for (const c of consultas) {
+        const tr = document.createElement("tr");
+
+        const tdId = document.createElement("td");
+        tdId.textContent = String(c.id);
+
+        const tdData = document.createElement("td");
+        // assumindo que c.hora_inicio é ISO
+        const d = new Date(c.hora_inicio);
+        tdData.textContent = d.toLocaleDateString("pt-BR", { timeZone: "UTC" });
+
+        const tdInicio = document.createElement("td");
+        tdInicio.textContent = d.toLocaleTimeString("pt-BR", {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "UTC"
+        });
+
+        const tdFim = document.createElement("td");
+        const dfim = new Date(c.hora_final);
+        tdFim.textContent = dfim.toLocaleTimeString("pt-BR", {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "UTC"
+        });
+
+        const tdDesc = document.createElement("td");
+        tdDesc.textContent = c.descricao;
+
+        const tdAcoes = document.createElement("td");
+        const btnExcluir = document.createElement("button");
+        btnExcluir.textContent = "Excluir";
+        btnExcluir.className = "btn-secondary";
+        btnExcluir.onclick = async () => {
+          // TODO: chamar DELETE na API
+          // await fetch(`http://localhost:3000/appointments/${c.id}`, { method: "DELETE" });
+          carregarConsultas();
+        };
+        tdAcoes.appendChild(btnExcluir);
+
+        tr.appendChild(tdId);
+        tr.appendChild(tdData);
+        tr.appendChild(tdInicio);
+        tr.appendChild(tdFim);
+        tr.appendChild(tdDesc);
+        tr.appendChild(tdAcoes);
+
+        tbody.appendChild(tr);
+      }
+    }
+
+    document.getElementById("btn-atualizar")?.addEventListener("click", () => {
+      carregarConsultas();
+    });
+
+    document.getElementById("btn-limpar")?.addEventListener("click", () => {
+      document.getElementById("form-consulta").reset?.();
+      msgForm.textContent = "";
+      msgForm.className = "msg";
+    });
+
+    document.getElementById("form-consulta")?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const form = event.target;
+      const data = document.getElementById("data").value;
+      const horaInicio = document.getElementById("hora_inicio").value;
+      const horaFinal = document.getElementById("hora_final").value;
+      const descricao = document.getElementById("descricao").value;
+
+      if (!data || !horaInicio || !horaFinal || !descricao) {
+        msgForm.textContent = "Preencha todos os campos.";
+        msgForm.className = "msg error";
+        return;
+      }
+
+      // TODO: enviar para a API REST (POST)
+      // const resp = await fetch("http://localhost:3000/appointments", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ data, horaInicio, horaFinal, descricao })
+      // });
+      //
+      // if (!resp.ok) { ... }
+
+      msgForm.textContent = "Simulação de agendamento (backend ainda não conectado).";
+      msgForm.className = "msg success";
+
+      form.reset();
+      carregarConsultas();
+    });
+
+    // Carrega inicialmente (quando tiver API)
+    // carregarConsultas();
+  </script>
+</body>
+</html>

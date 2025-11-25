@@ -1,10 +1,10 @@
 export class Consulta{
-    private id?: number;
+    private id?: number | undefined;
     private hora_inicio: Date;
     private hora_final: Date;
     private descricao: string;
 
-    constructor(id: number, hora_inicio: Date, hora_final: Date, descricao: string) {
+    constructor(id: number | undefined, hora_inicio: Date, hora_final: Date, descricao: string) {
         this.id = id;
         this.hora_inicio = hora_inicio;
         this.hora_final = hora_final;
@@ -12,7 +12,7 @@ export class Consulta{
     }
 
     se_sobrepoem(outra: Consulta): boolean {
-        if(this.hora_final < outra.hora_inicio || this.hora_inicio > outra.hora_final){
+        if(this.hora_final > outra.hora_inicio && this.hora_inicio < outra.hora_final){
             return true;
         }
         return false;

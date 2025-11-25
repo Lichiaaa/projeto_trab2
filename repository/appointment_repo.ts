@@ -8,7 +8,7 @@ export interface IRepo {
     buscar_id(id: number): Consulta | null;
 }
 
-class SqLite_Appointment_Repo implements IRepo {
+export class SqLite_Appointment_Repo implements IRepo {
     private db: Database.Database;
     
     constructor(dbPath: string = "appointments.db") {
@@ -53,7 +53,7 @@ class SqLite_Appointment_Repo implements IRepo {
         if (id == null) {
       // INSERT (nova consulta)
             const stmt = this.db.prepare(
-                `INSERT INTO appointments (start_datetime, end_datetime, description)
+                `INSERT INTO appointments (hora_inicio, hora_final, descricao)
                     VALUES (?, ?, ?)`
                 );
 
@@ -94,7 +94,7 @@ class SqLite_Appointment_Repo implements IRepo {
                 FROM appointments
                 WHERE id = ?`
         )
-        .get(id);
+        .get(id) as any;
 
         if (!row) {
             return null;
