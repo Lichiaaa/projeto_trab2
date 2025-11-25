@@ -200,24 +200,19 @@
   </div>
 
   <script>
-    // API REST:
-    // GET    /appointments
-    // POST   /appointments
-    // DELETE /appointments/:id
-    //
-    // Por enquanto, deixo os lugares marcados com TODO pra ligar no back.
-
     const tabela = document.getElementById("tabela-consultas");
     const tbody = tabela.querySelector("tbody");
     const listaVazia = document.getElementById("lista-vazia");
     const msgForm = document.getElementById("mensagem-form");
 
-    function formatarDataHoraISO(isoString) {
-      const date = new Date(isoString);
-      return date.toLocaleString("pt-BR", {
-        year: "2-digit",
-        month: "2-digit",
-        day: "2-digit",
+    const API_BASE = "http://localhost:3000";
+
+    function formatarData(date) {
+      return date.toLocaleDateString("pt-BR", { timeZone: "UTC" });
+    }
+
+    function formatarHora(date) {
+      return date.toLocaleTimeString("pt-BR", {
         hour: "2-digit",
         minute: "2-digit",
         timeZone: "UTC"
@@ -225,11 +220,8 @@
     }
 
     async function carregarConsultas() {
-      // TODO: substituir esse array fake por fetch da API REST
-      // const resp = await fetch("http://localhost:3000/appointments");
-      // const consultas = await resp.json();
-
-      const consultas = []; // <-- TROCAR depois pela resposta real
+      const resp = await fetch(`${API_BASE}/appointments`);
+      const consultas = await resp.json();
 
       tbody.innerHTML = "";
 
@@ -245,68 +237,39 @@
       for (const c of consultas) {
         const tr = document.createElement("tr");
 
-        const tdId = document.createElement("td");
-        tdId.textContent = String(c.id);
+        const dtInicio = new Date(c.hora_inicio);
+        const dtFim = new Date(c.hora_final);
 
-        const tdData = document.createElement("td");
-        // assumindo que c.hora_inicio é ISO
-        const d = new Date(c.hora_inicio);
-        tdData.textContent = d.toLocaleDateString("pt-BR", { timeZone: "UTC" });
-
-        const tdInicio = document.createElement("td");
-        tdInicio.textContent = d.toLocaleTimeString("pt-BR", {
-          hour: "2-digit",
-          minute: "2-digit",
-          timeZone: "UTC"
-        });
-
-        const tdFim = document.createElement("td");
-        const dfim = new Date(c.hora_final);
-        tdFim.textContent = dfim.toLocaleTimeString("pt-BR", {
-          hour: "2-digit",
-          minute: "2-digit",
-          timeZone: "UTC"
-        });
-
-        const tdDesc = document.createElement("td");
-        tdDesc.textContent = c.descricao;
-
-        const tdAcoes = document.createElement("td");
-        const btnExcluir = document.createElement("button");
-        btnExcluir.textContent = "Excluir";
-        btnExcluir.className = "btn-secondary";
-        btnExcluir.onclick = async () => {
-          // TODO: chamar DELETE na API
-          // await fetch(`http://localhost:3000/appointments/${c.id}`, { method: "DELETE" });
-          carregarConsultas();
-        };
-        tdAcoes.appendChild(btnExcluir);
-
-        tr.appendChild(tdId);
-        tr.appendChild(tdData);
-        tr.appendChild(tdInicio);
-        tr.appendChild(tdFim);
-        tr.appendChild(tdDesc);
-        tr.appendChild(tdAcoes);
+        tr.innerHTML = `
+          <td>${c.id}</td>
+          <td>${formatarData(dtInicio)}</td>
+          <td>${formatarHora(dtInicio)}</td>
+          <td>${formatarHora(dtFim)}</td>
+          <td>${c.descricao}</td>
+          <td>
+            <button data-id="${c.id}" class="btn-secondary btn-excluir">
+              Excluir
+            </button>
+          </td>
+        `;
 
         tbody.appendChild(tr);
       }
+
+      document.querySelectorAll(".btn-excluir").forEach(btn => {
+        btn.addEventListener("click", async (ev) => {
+          const id = ev.target.getAttribute("data-id");
+          await fetch(`${API_BASE}/appointments/${id}`, {
+            method: "DELETE"
+          });
+          carregarConsultas();
+        });
+      });
     }
-
-    document.getElementById("btn-atualizar")?.addEventListener("click", () => {
-      carregarConsultas();
-    });
-
-    document.getElementById("btn-limpar")?.addEventListener("click", () => {
-      document.getElementById("form-consulta").reset?.();
-      msgForm.textContent = "";
-      msgForm.className = "msg";
-    });
 
     document.getElementById("form-consulta")?.addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      const form = event.target;
       const data = document.getElementById("data").value;
       const horaInicio = document.getElementById("hora_inicio").value;
       const horaFinal = document.getElementById("hora_final").value;
@@ -318,24 +281,48 @@
         return;
       }
 
-      // TODO: enviar para a API REST (POST)
-      // const resp = await fetch("http://localhost:3000/appointments", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ data, horaInicio, horaFinal, descricao })
-      // });
-      //
-      // if (!resp.ok) { ... }
+      const [ano, mes, dia] = data.split("-");
+      const dataFormatoAPI = `${dia}/${mes}/${ano}`;
 
-      msgForm.textContent = "Simulação de agendamento (backend ainda não conectado).";
-      msgForm.className = "msg success";
+      try {
+        const resp = await fetch(`${API_BASE}/appointments`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            data: dataFormatoAPI,
+            horaInicio,
+            horaFinal,
+            descricao
+          })
+        });
 
-      form.reset();
-      carregarConsultas();
+        if (resp.status === 409) {
+          msgForm.textContent = "Conflito: já existe uma consulta nesse horário.";
+          msgForm.className = "msg error";
+          return;
+        }
+
+        if (!resp.ok) {
+          msgForm.textContent = "Erro ao agendar consulta.";
+          msgForm.className = "msg error";
+          return;
+        }
+
+        msgForm.textContent = "Consulta agendada com sucesso!";
+        msgForm.className = "msg success";
+
+        document.getElementById("form-consulta").reset();
+        carregarConsultas();
+      } catch (e) {
+        console.error(e);
+        msgForm.textContent = "Erro ao comunicar com o servidor.";
+        msgForm.className = "msg error";
+      }
     });
 
-    // Carrega inicialmente (quando tiver API)
-    // carregarConsultas();
+    document.getElementById("btn-atualizar").addEventListener("click", carregarConsultas);
+
+    carregarConsultas();
   </script>
 </body>
 </html>
