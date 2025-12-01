@@ -3,18 +3,108 @@
 <head>
   <meta charset="UTF-8" />
   <title>Agenda de Consultas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0 1.5rem 2rem;
-      background-color: #f5f5f5;
+    :root {
+      --accent-pink: #f9a8d4;
     }
 
-    header {
-      padding: 1rem 0;
-      margin-bottom: 1rem;
-      border-bottom: 1px solid #ddd;
+    body {
+      font-family: 'Nunito', sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #0b3c49, #6d0056, #0b3c49);
+      background-size: 300% 300%;
+      animation: fundoAnimado 12s ease infinite;
+      color: #cfd4e0;
+    }
+
+    @keyframes fundoAnimado {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .header {
+      position: relative;
+      padding: 4rem 0 3.5rem; 
+      overflow: hidden;
+      background: linear-gradient(
+        135deg,
+        #2a0a46,
+        #5c0f72,
+        #2a0a46
+      );
+    }
+
+    .header::before {
+      content: "";
+      position: absolute;
+      top: -20%;
+      left: -10%;
+      width: 120%;
+      height: 160%;
+
+      background: radial-gradient(
+        circle at center,
+        rgba(100, 0, 95, 0.644),
+        rgba(87, 1, 65, 0.453),
+        rgba(20, 0, 40, 0.15),
+        transparent
+      );
+
+      animation: pulseRoxo 12s ease-in-out infinite alternate;
+      filter: blur(50px);
+      z-index: 0; 
+    }
+
+    .header::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+
+      background: var(--accent-pink);
+      
+      background-size: 200% 100%;
+      opacity: 0.45; 
+    }
+
+    .header * {
+      position: relative;
+      z-index: 1;
+    }
+
+    @keyframes pulseRoxo {
+      0% {
+        transform: scale(1) translateY(0px);
+        opacity: 0.4;
+      }
+      50% {
+        transform: scale(1.15) translateY(-10px);
+        opacity: 0.6;
+      }
+      100% {
+        transform: scale(1.05) translateY(5px);
+        opacity: 0.45;
+      }
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 3rem;
+      font-weight: 800;
+      color: #e2e6f2;  /* azul bem claro */
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .header p {
+      margin-top: 10px;
+      color: #9ca3b8;
+      font-size: 1.1rem;
+      letter-spacing: 1px;
     }
 
     h1 {
@@ -22,20 +112,29 @@
     }
 
     .container {
-      max-width: 900px;
+      max-width: 1400px;
       margin: 0 auto;
+      margin-top: 40px;
     }
 
     .card {
-      background: #fff;
-      border-radius: 8px;
-      padding: 1rem 1.5rem;
-      margin-bottom: 1.5rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+      background: rgba(15, 4, 40, 0.75);          
+      border-radius: 16px;
+      padding: 1.7rem 2rem;
+      margin-bottom: 1.8rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      backdrop-filter: blur(10px);
+
+      color: #cfd4e0;
     }
 
     .card h2 {
       margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--accent-pink);;
     }
 
     form {
@@ -48,14 +147,31 @@
     label {
       font-size: 0.9rem;
       font-weight: 600;
+      color: var(--accent-pink);;
     }
 
-    input, textarea, button, select {
+    input, textarea, select {
       font: inherit;
-      padding: 0.4rem 0.5rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
+      padding: 0.45rem 0.6rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
       box-sizing: border-box;
+
+      background: rgba(5, 8, 20, 0.85); 
+      color: #e3e6f2;                    
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: #e89cc7;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: #f9a8d4;
+      box-shadow: 0 0 0 2px rgba(249, 168, 212, 0.35);
     }
 
     textarea {
@@ -72,36 +188,123 @@
       margin-top: 0.5rem;
     }
 
-    button {
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: 0.45rem 1.2rem;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+
+      border: 1px solid transparent;
       cursor: pointer;
-      border: none;
+      transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
     }
 
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    /* primário – Agendar */
     .btn-primary {
-      background-color: #2563eb;
-      color: #fff;
+      position: relative;
+      background-color: #3a0057;
+      color: #f3e8ff;
+      overflow: hidden;
     }
 
+    .btn-primary::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -120%;
+      width: 250%;
+      height: 100%;
+      background: linear-gradient(
+        120deg,
+        transparent,
+        rgba(249, 168, 212, 0.6),
+        transparent
+      );
+      animation: slideGlow 12s infinite linear;
+    }
+
+    @keyframes slideGlow {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(50%); }
+    }
+    .btn-primary:hover {
+      background-color: #540043;
+    }
+
+    /* secundário – Limpar, Atualizar lista */
     .btn-secondary {
       background-color: #e5e7eb;
       color: #111827;
     }
 
+    .btn-secondary:hover {
+      background-color: #d1d5db;
+    }
+
+    /* perigo – Excluir */
+    .btn-danger {
+      background-color: #b91c1c;
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      background-color: #dc2626;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .table-wrapper {
+      overflow: hidden;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 0.5rem;
-      font-size: 0.9rem;
-    }
-
-    th, td {
-      border: 1px solid #e5e7eb;
-      padding: 0.5rem 0.6rem;
-      text-align: left;
+      background: rgba(10, 5, 30, 0.65);
+      backdrop-filter: blur(6px);
+      color: #dcd7e6; 
+      font-size: 0.95rem;
     }
 
     th {
-      background-color: #f3f4f6;
+      background: rgba(255, 255, 255, 0.08);
+      color: #bfa3c8; 
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    tbody tr:hover {
+      background: rgba(255, 255, 255, 0.06);
     }
 
     .empty {
@@ -121,8 +324,8 @@
     }
 
     .msg {
-      margin-top: 0.5rem;
       font-size: 0.9rem;
+      color: var(--accent-pink);
     }
 
     .msg.error {
@@ -135,12 +338,15 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Agenda de Consultas</h1>
-      <p>Interface web para listar e agendar consultas.</p>
-    </header>
+  
+  <header class="header">
+    <div class="header-inner container">
+      <h1>Clínica Synapse</h1>
+      <p>Cuidando das conexões que importam</p>
+    </div>
+  </header>
 
+  <div class="container">
     <!-- Card de cadastro -->
     <section class="card">
       <h2>Agendar nova consulta</h2>
@@ -163,8 +369,12 @@
         <textarea id="descricao" name="descricao" placeholder="Descrição da consulta" required></textarea>
 
         <div class="form-actions">
-          <button type="button" class="btn-secondary" id="btn-limpar">Limpar</button>
-          <button type="submit" class="btn-primary">Agendar</button>
+          <button type="button" class="btn btn-secondary" id="btn-limpar">
+            Limpar
+          </button>
+          <button type="submit" class="btn btn-primary">
+            Agendar
+          </button>
         </div>
       </form>
       <div id="mensagem-form" class="msg"></div>
@@ -173,7 +383,7 @@
     <!-- Card de listagem -->
     <section class="card">
       <h2>Consultas agendadas</h2>
-      <button id="btn-atualizar" class="btn-secondary" style="margin-bottom: 0.5rem;">
+      <button id="btn-atualizar" class="btn btn-secondary" style="margin-bottom: 0.5rem;">
         Atualizar lista
       </button>
 
@@ -181,21 +391,23 @@
         Nenhuma consulta cadastrada.
       </div>
 
-      <table id="tabela-consultas" style="display: none;">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Data</th>
-            <th>Início</th>
-            <th>Término</th>
-            <th>Descrição</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- linhas geradas via JS -->
-        </tbody>
-      </table>
+      <div class="table-wrapper">
+        <table id="tabela-consultas" style="display: none;">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Data</th>
+              <th>Início</th>
+              <th>Término</th>
+              <th>Descrição</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- linhas geradas via JS -->
+          </tbody>
+        </table>
+      </div>
     </section>
   </div>
 
@@ -247,7 +459,7 @@
           <td>${formatarHora(dtFim)}</td>
           <td>${c.descricao}</td>
           <td>
-            <button data-id="${c.id}" class="btn-secondary btn-excluir">
+            <button data-id="${c.id}" class="btn btn-danger btn-excluir">
               Excluir
             </button>
           </td>
